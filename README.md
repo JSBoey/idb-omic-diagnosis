@@ -985,18 +985,20 @@ qiime feature-classifier classify-sklearn \
     --o-classification ${reads%%_*}.${db}.qza
 ```
 
+JOBID: 46363024
+
 `scripts/ITS_taxonomy.sl`
 
 ```bash
 #!/bin/bash -e
-#SBATCH --job-name=16S_taxonomy
+#SBATCH --job-name=ITS_taxonomy
 #SBATCH --account=uoo03475
 #SBATCH --time=2:00:00
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=32
 #SBATCH --partition=milan
-#SBATCH --output=slurm_out/%x.%j.%A_%a.out
-#SBATCH --error=slurm_err/%x.%j.%A_%a.err
+#SBATCH --output=slurm_out/%x.%j.out
+#SBATCH --error=slurm_err/%x.%j.err
 
 module purge
 module load QIIME2/2023.5
@@ -1009,10 +1011,12 @@ reads=ITS_ITSxpress_rep_seq.se.qza
 qiime feature-classifier classify-sklearn \
     --verbose \
     --p-n-jobs $SLURM_CPUS_PER_TASK \
-    --i-reads 1.asv/${reads} \
+    --i-reads 2.asv/${reads} \
     --i-classifier ${cls} \
     --o-classification ${reads%%_*}.${db}.qza
 ```
+
+JOBID: 46363080
 
 # 6. Export results
 
@@ -1038,4 +1042,29 @@ done
 
 # Taxonomy
 
+```
+
+# Backup
+
+```bash
+# QC information
+tar -cvf ../project_space/1.qc.tar 1.qc/
+
+# Read-based outputs
+tar -cvf ../project_space/2.asv.tar \
+    2.asv/ITS_ITSxpress.manifest \
+    2.asv/ITS_ITSxpress_demux.qza \
+    2.asv/ITS_ITSxpress_denoise_stats.se.qza \
+    2.asv/ITS_ITSxpress_rep_seq.se.qza \
+    2.asv/ITS_ITSxpress_feature_table.se.qza \
+    2.asv/16S.manifest \
+    2.asv/16S_demux.qza \
+    2.asv/16S_denoise_stats.qza \
+    2.asv/16S_rep_seq.qzv \
+    2.asv/16S_feature_table.qza
+
+tar -cvf ../project_space/3.phylogeny.tar 3.phylogeny/*
+
+# Database and classifiers
+tar -cvf ../project_space/db.tar db/*
 ```
