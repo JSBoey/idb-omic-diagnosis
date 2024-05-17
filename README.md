@@ -960,9 +960,9 @@ mkdir -p 4.taxonomy
 #!/bin/bash -e
 #SBATCH --job-name=16S_taxonomy
 #SBATCH --account=uoo03475
-#SBATCH --time=2:00:00
-#SBATCH --mem=32G
-#SBATCH --cpus-per-task=32
+#SBATCH --time=3:00:00
+#SBATCH --mem=80G
+#SBATCH --cpus-per-task=12
 #SBATCH --partition=milan
 #SBATCH --array=0-1
 #SBATCH --output=slurm_out/%x.%j.%A_%a.out
@@ -982,10 +982,10 @@ qiime feature-classifier classify-sklearn \
     --p-n-jobs $SLURM_CPUS_PER_TASK \
     --i-reads 2.asv/${reads} \
     --i-classifier ${cls} \
-    --o-classification ${reads%%_*}.${db}.qza
+    --o-classification 4.taxonomy/${reads%%_*}.${db}.qza
 ```
 
-JOBID: 46363024
+JOBID: 46363815
 
 `scripts/ITS_taxonomy.sl`
 
@@ -993,9 +993,9 @@ JOBID: 46363024
 #!/bin/bash -e
 #SBATCH --job-name=ITS_taxonomy
 #SBATCH --account=uoo03475
-#SBATCH --time=2:00:00
-#SBATCH --mem=32G
-#SBATCH --cpus-per-task=32
+#SBATCH --time=3:00:00
+#SBATCH --mem=80G
+#SBATCH --cpus-per-task=12
 #SBATCH --partition=milan
 #SBATCH --output=slurm_out/%x.%j.out
 #SBATCH --error=slurm_err/%x.%j.err
@@ -1004,19 +1004,20 @@ module purge
 module load QIIME2/2023.5
 
 cls=db/UNITE_10.0_classifier.qza
-db=${cls%%_*}
+db=$(basename ${cls%%_*})
 
 reads=ITS_ITSxpress_rep_seq.se.qza
 
 qiime feature-classifier classify-sklearn \
     --verbose \
+    --p-reads-per-batch 10000 \
     --p-n-jobs $SLURM_CPUS_PER_TASK \
     --i-reads 2.asv/${reads} \
     --i-classifier ${cls} \
-    --o-classification ${reads%%_*}.${db}.qza
+    --o-classification 4.taxonomy/${reads%%_*}.${db}.qza
 ```
 
-JOBID: 46363080
+JOBID: 46363835
 
 # 6. Export results
 
@@ -1041,7 +1042,11 @@ for i in 3.phylogeny/*.rooted_tree.qza; do
 done
 
 # Taxonomy
-
+for i in 4.taxonomy/*; do
+    unzip -p ${i} \
+        */data/taxonomy.tsv \
+        > 5.export/$(basename ${i} .qza)_taxonomy.tsv
+done
 ```
 
 # Backup
@@ -1067,4 +1072,10 @@ tar -cvf ../project_space/3.phylogeny.tar 3.phylogeny/*
 
 # Database and classifiers
 tar -cvf ../project_space/db.tar db/*
+
+# Taxonomies
+tar -cvf ../project_space/4.taxonomy.tar 4.taxonomy/*
+
+# Exported tables
+tar -cvzf ../project_space/5.export.tar.gz 5.export/*
 ```
